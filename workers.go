@@ -34,12 +34,11 @@ func Do(p Processor) (err error) {
 		return
 	}
 
-	maxWorkersCount := p.MaxWorkersCount()
-	if maxWorkersCount <= 0 {
-		maxWorkersCount = runtime.GOMAXPROCS(-1) * 4
+	workersCount := p.MaxWorkersCount()
+	if workersCount <= 0 {
+		workersCount = runtime.GOMAXPROCS(-1) * 4
 	}
 
-	workersCount := maxWorkersCount
 	if workersCount > elementsCount {
 		workersCount = elementsCount
 	}
@@ -49,7 +48,7 @@ func Do(p Processor) (err error) {
 
 	msgs := misc.Messages{}
 
-	queue := make(chan *element, elementsCount+1)
+	queue := make(chan element, elementsCount+1)
 	finished := make(chan bool)
 
 	go func() {
@@ -58,10 +57,10 @@ func Do(p Processor) (err error) {
 		for wi := 0; wi < workersCount; wi++ {
 			wi := wi
 			go func() {
-				defer panic.SaveStackToLog()
 				defer func() {
 					p.ProcFinishFunc(wi)
 					wg.Done()
+					panic.SaveStackToLog()
 				}()
 
 				p.ProcInitFunc(wi)
@@ -71,13 +70,13 @@ func Do(p Processor) (err error) {
 				for {
 					data, more := <-queue
 
-					// Канал закрыт
+					// Channel is closed
 					if !more {
 						return
 					}
 
-					// Получено stop-value
-					if data == nil {
+					// stop-value received
+					if data.idx < 0 {
 						finished <- true
 						return
 					}
@@ -92,14 +91,16 @@ func Do(p Processor) (err error) {
 	}()
 
 	for i := 0; i < elementsCount; i++ {
-		queue <- &element{
+		queue <- element{
 			idx:  i,
 			data: p.GetElement(i),
 		}
 	}
 
 	// stop-value
-	queue <- nil
+	queue <- element{
+		idx: -1,
+	}
 
 	<-finished
 	close(queue)
