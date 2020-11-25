@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"fmt"
 	"runtime"
 	"sync"
 
@@ -10,31 +11,85 @@ import (
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
-// Processor --
-type Processor interface {
-	MaxWorkersCount() int
-	ElementsCount() int
-	GetElement(idx int) interface{}
-	ProcInitFunc(workerID int)
-	ProcFinishFunc(workerID int)
-	ProcFunc(idx int, data interface{}) (err error)
-}
+type (
+	// Worker --
+	Worker struct {
+		processor              Processor
+		flags                  Flags
+		maxWorker              int
+		multithreadedThreshold int
+	}
 
-type element struct {
-	idx  int
-	data interface{}
+	// Processor --
+	Processor interface {
+		ElementsCount() int
+		GetElement(idx int) interface{}
+		ProcInitFunc(workerID int)
+		ProcFinishFunc(workerID int)
+		ProcFunc(idx int, data interface{}) (err error)
+	}
+
+	// Flags --
+	Flags uint64
+
+	// MaxWorker --
+	MaxWorker uint
+
+	// MultithreadedThreshold --
+	MultithreadedThreshold uint
+
+	element struct {
+		idx  int
+		data interface{}
+	}
+)
+
+const (
+	// FlagDontUseGetElement --
+	FlagDontUseGetElement = 0x0000001
+	// FlagFailOnError --
+	FlagFailOnError = 0x0000002
+)
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+// New --
+func New(processor Processor, options ...interface{}) (w *Worker, err error) {
+	if processor == nil {
+		err = fmt.Errorf("processor is nil")
+		return
+	}
+
+	w = &Worker{
+		processor: processor,
+	}
+
+	for _, opt := range options {
+		switch opt.(type) {
+		case Flags:
+			w.flags = opt.(Flags)
+		case MaxWorker:
+			w.maxWorker = int(opt.(MaxWorker))
+		case MultithreadedThreshold:
+			w.multithreadedThreshold = int(opt.(MultithreadedThreshold))
+		}
+	}
+
+	return
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // Do --
-func Do(p Processor) (err error) {
+func (w *Worker) Do() (err error) {
+	p := w.processor
+
 	elementsCount := p.ElementsCount()
 	if elementsCount <= 0 {
 		return
 	}
 
-	workersCount := p.MaxWorkersCount()
+	workersCount := w.maxWorker
 	if workersCount <= 0 {
 		workersCount = runtime.GOMAXPROCS(-1) * 4
 	}
@@ -43,16 +98,49 @@ func Do(p Processor) (err error) {
 		workersCount = elementsCount
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(int(workersCount))
+	multithreadedThreshold := w.multithreadedThreshold
+	if multithreadedThreshold < 0 {
+		multithreadedThreshold = workersCount * 50
+	}
 
 	msgs := misc.Messages{}
 
+	if workersCount == 1 || multithreadedThreshold > elementsCount {
+		// Singlethread
+		p.ProcInitFunc(-1)
+
+		for i := 0; i < elementsCount; i++ {
+			var data interface{}
+			if w.flags&FlagDontUseGetElement == 0 {
+				data = p.GetElement(i)
+			}
+
+			err := p.ProcFunc(i, data)
+			if err != nil {
+				msgs.AddError(err)
+				if w.flags&FlagFailOnError != 0 {
+					break
+				}
+			}
+		}
+
+		p.ProcFinishFunc(-1)
+
+		err = msgs.Error()
+		return
+	}
+
+	// Multithread
+	var wg sync.WaitGroup
+	wg.Add(int(workersCount))
+
 	queue := make(chan element, elementsCount+1)
-	finished := make(chan bool)
+	finished := make(chan bool, workersCount)
 
 	go func() {
 		defer panic.SaveStackToLog()
+
+		active := true
 
 		for wi := 0; wi < workersCount; wi++ {
 			wi := wi
@@ -67,7 +155,7 @@ func Do(p Processor) (err error) {
 
 				runtime.Gosched()
 
-				for {
+				for active {
 					data, more := <-queue
 
 					// Channel is closed
@@ -84,6 +172,11 @@ func Do(p Processor) (err error) {
 					err := p.ProcFunc(data.idx, data.data)
 					if err != nil {
 						msgs.AddError(err)
+						if w.flags&FlagFailOnError != 0 {
+							active = false
+							finished <- true
+							return
+						}
 					}
 				}
 			}()
@@ -91,9 +184,14 @@ func Do(p Processor) (err error) {
 	}()
 
 	for i := 0; i < elementsCount; i++ {
+		var data interface{}
+		if w.flags&FlagDontUseGetElement == 0 {
+			data = p.GetElement(i)
+		}
+
 		queue <- element{
 			idx:  i,
-			data: p.GetElement(i),
+			data: data,
 		}
 	}
 
@@ -106,11 +204,9 @@ func Do(p Processor) (err error) {
 	close(queue)
 	wg.Wait()
 
-	err = msgs.Error()
-	if err != nil {
-		return
-	}
+	close(finished)
 
+	err = msgs.Error()
 	return
 }
 
