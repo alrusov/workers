@@ -103,7 +103,7 @@ func (w *Worker) Do() (err error) {
 		multithreadedThreshold = workersCount * 50
 	}
 
-	msgs := misc.Messages{}
+	msgs := misc.NewMessages()
 
 	if workersCount == 1 || multithreadedThreshold > elementsCount {
 		// Singlethread
