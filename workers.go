@@ -138,17 +138,19 @@ func (w *Worker) Do() (err error) {
 	finished := make(chan bool, workersCount)
 
 	go func() {
-		defer panic.SaveStackToLog()
+		panicID := panic.ID()
+		defer panic.SaveStackToLogEx(panicID)
 
 		active := true
 
 		for wi := 0; wi < workersCount; wi++ {
 			wi := wi
 			go func() {
+				panicID := panic.ID()
+				defer panic.SaveStackToLogEx(panicID)
 				defer func() {
 					p.ProcFinishFunc(wi)
 					wg.Done()
-					panic.SaveStackToLog()
 				}()
 
 				p.ProcInitFunc(wi)
