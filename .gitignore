@@ -13,18 +13,17 @@
 *.out
 
 *.tmp
-
-# custom
-
-Makefile
-.env
+*.log
 
 _extra/
 logs/
 *.log
+error_log/
 
 TODO
-BUILD_NUMBER
+LAST_BUILD
+Makefile.private
+
 debug
 debug.test
 __debug_bin

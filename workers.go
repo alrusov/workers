@@ -65,13 +65,13 @@ func New(processor Processor, options ...interface{}) (w *Worker, err error) {
 	}
 
 	for _, opt := range options {
-		switch opt.(type) {
+		switch opt := opt.(type) {
 		case Flags:
-			w.flags = opt.(Flags)
+			w.flags = opt
 		case MaxWorker:
-			w.maxWorker = int(opt.(MaxWorker))
+			w.maxWorker = int(opt)
 		case MultithreadedThreshold:
-			w.multithreadedThreshold = int(opt.(MultithreadedThreshold))
+			w.multithreadedThreshold = int(opt)
 		}
 	}
 
