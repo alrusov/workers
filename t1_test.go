@@ -64,7 +64,7 @@ func testComplex(t *testing.T, n int) {
 
 		for i := 0; i < n; i++ {
 			if tw.data[i] != -i {
-				t.Fatalf("%s: found %d, expected %d", fn, tw.data[i], -i)
+				t.Fatalf("%s: found %d, %d expected", fn, tw.data[i], -i)
 			}
 		}
 
@@ -87,15 +87,15 @@ func testComplex(t *testing.T, n int) {
 		}
 
 		if tw.singleThread != st {
-			t.Fatalf("%s: single threads count is %d, expected %d", fn, tw.singleThread, st)
+			t.Fatalf("%s: single threads count is %d, %d expected", fn, tw.singleThread, st)
 		}
 
 		if tw.started != int32(threads) {
-			t.Fatalf("%s: started %d threads, expected %d", fn, tw.started, threads)
+			t.Fatalf("%s: started %d threads, %d expected", fn, tw.started, threads)
 		}
 
 		if tw.finished != int32(threads) {
-			t.Fatalf("%s: finished %d threads, expected %d", fn, tw.finished, threads)
+			t.Fatalf("%s: finished %d threads, %d expected", fn, tw.finished, threads)
 		}
 	}
 

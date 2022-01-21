@@ -117,7 +117,7 @@ func (w *Worker) Do() (err error) {
 
 			err := p.ProcFunc(i, data)
 			if err != nil {
-				msgs.AddError(err)
+				msgs.Add("[%d] %s", i, err)
 				if w.flags&FlagFailOnError != 0 {
 					break
 				}
@@ -173,7 +173,7 @@ func (w *Worker) Do() (err error) {
 
 					err := p.ProcFunc(data.idx, data.data)
 					if err != nil {
-						msgs.AddError(err)
+						msgs.Add("[%d] %s", data.idx, err)
 						if w.flags&FlagFailOnError != 0 {
 							active = false
 							finished <- true
