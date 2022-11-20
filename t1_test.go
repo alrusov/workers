@@ -64,7 +64,7 @@ func testComplex(t *testing.T, n int) {
 
 		for i := 0; i < n; i++ {
 			if tw.data[i] != -i {
-				t.Fatalf("%s: found %d, %d expected", fn, tw.data[i], -i)
+				t.Fatalf("%s: found %d, expected %d", fn, tw.data[i], -i)
 			}
 		}
 
@@ -87,15 +87,15 @@ func testComplex(t *testing.T, n int) {
 		}
 
 		if tw.singleThread != st {
-			t.Fatalf("%s: single threads count is %d, %d expected", fn, tw.singleThread, st)
+			t.Fatalf("%s: single threads count is %d, expected %d", fn, tw.singleThread, st)
 		}
 
 		if tw.started != int32(threads) {
-			t.Fatalf("%s: started %d threads, %d expected", fn, tw.started, threads)
+			t.Fatalf("%s: started %d threads, expected %d", fn, tw.started, threads)
 		}
 
 		if tw.finished != int32(threads) {
-			t.Fatalf("%s: finished %d threads, %d expected", fn, tw.finished, threads)
+			t.Fatalf("%s: finished %d threads, expected %d", fn, tw.finished, threads)
 		}
 	}
 
@@ -187,7 +187,7 @@ func (w *testWorker) ElementsCount() int {
 	return len(w.data)
 }
 
-func (w *testWorker) GetElement(idx int) interface{} {
+func (w *testWorker) GetElement(idx int) any {
 	return w.data[idx]
 }
 
@@ -202,7 +202,7 @@ func (w *testWorker) ProcFinishFunc(workerID int) {
 	atomic.AddInt32(&w.finished, 1)
 }
 
-func (w *testWorker) ProcFunc(idx int, data interface{}) (err error) {
+func (w *testWorker) ProcFunc(idx int, data any) (err error) {
 	if !w.clean {
 		w.data[idx] = -w.data[idx]
 

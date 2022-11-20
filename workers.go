@@ -23,10 +23,10 @@ type (
 	// Processor --
 	Processor interface {
 		ElementsCount() int
-		GetElement(idx int) interface{}
+		GetElement(idx int) any
 		ProcInitFunc(workerID int)
 		ProcFinishFunc(workerID int)
-		ProcFunc(idx int, data interface{}) (err error)
+		ProcFunc(idx int, data any) (err error)
 	}
 
 	// Flags --
@@ -40,7 +40,7 @@ type (
 
 	element struct {
 		idx  int
-		data interface{}
+		data any
 	}
 )
 
@@ -54,7 +54,7 @@ const (
 //----------------------------------------------------------------------------------------------------------------------------//
 
 // New --
-func New(processor Processor, options ...interface{}) (w *Worker, err error) {
+func New(processor Processor, options ...any) (w *Worker, err error) {
 	if processor == nil {
 		err = fmt.Errorf("processor is nil")
 		return
@@ -110,7 +110,7 @@ func (w *Worker) Do() (err error) {
 		p.ProcInitFunc(-1)
 
 		for i := 0; i < elementsCount; i++ {
-			var data interface{}
+			var data any
 			if w.flags&FlagDontUseGetElement == 0 {
 				data = p.GetElement(i)
 			}
@@ -148,6 +148,7 @@ func (w *Worker) Do() (err error) {
 			go func() {
 				panicID := panic.ID()
 				defer panic.SaveStackToLogEx(panicID)
+
 				defer func() {
 					p.ProcFinishFunc(wi)
 					wg.Done()
@@ -186,7 +187,7 @@ func (w *Worker) Do() (err error) {
 	}()
 
 	for i := 0; i < elementsCount; i++ {
-		var data interface{}
+		var data any
 		if w.flags&FlagDontUseGetElement == 0 {
 			data = p.GetElement(i)
 		}
