@@ -131,11 +131,11 @@ func (w *Worker) Do() (err error) {
 	}
 
 	// Multithread
+
 	var wg sync.WaitGroup
 	wg.Add(int(workersCount))
 
-	queue := make(chan element, elementsCount+1)
-	finished := make(chan bool, workersCount)
+	queue := make(chan *element, elementsCount)
 
 	go func() {
 		panicID := panic.ID()
@@ -156,19 +156,11 @@ func (w *Worker) Do() (err error) {
 
 				p.ProcInitFunc(wi)
 
-				runtime.Gosched()
-
 				for active {
 					data, more := <-queue
 
-					// Channel is closed
+					// No more data
 					if !more {
-						return
-					}
-
-					// stop-value received
-					if data.idx < 0 {
-						finished <- true
 						return
 					}
 
@@ -177,7 +169,6 @@ func (w *Worker) Do() (err error) {
 						msgs.Add("[%d] %s", data.idx, err)
 						if w.flags&FlagFailOnError != 0 {
 							active = false
-							finished <- true
 							return
 						}
 					}
@@ -192,22 +183,14 @@ func (w *Worker) Do() (err error) {
 			data = p.GetElement(i)
 		}
 
-		queue <- element{
+		queue <- &element{
 			idx:  i,
 			data: data,
 		}
 	}
 
-	// stop-value
-	queue <- element{
-		idx: -1,
-	}
-
-	<-finished
 	close(queue)
 	wg.Wait()
-
-	close(finished)
 
 	err = msgs.Error()
 	return
