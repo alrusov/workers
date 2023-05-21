@@ -91,7 +91,7 @@ func (w *Worker) Do() (err error) {
 
 	workersCount := w.maxWorker
 	if workersCount <= 0 {
-		workersCount = runtime.GOMAXPROCS(-1) * 4
+		workersCount = runtime.GOMAXPROCS(-1)
 	}
 
 	if workersCount > elementsCount {
