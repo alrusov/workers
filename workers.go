@@ -33,10 +33,10 @@ type (
 	Flags uint64
 
 	// MaxWorker --
-	MaxWorker uint
+	MaxWorker int
 
 	// MultithreadedThreshold --
-	MultithreadedThreshold uint
+	MultithreadedThreshold int
 
 	element struct {
 		idx  int
@@ -90,7 +90,7 @@ func (w *Worker) Do() (err error) {
 	}
 
 	workersCount := w.maxWorker
-	if workersCount <= 0 {
+	if workersCount <= 0 { // <= 0
 		workersCount = runtime.GOMAXPROCS(-1)
 	}
 
@@ -99,7 +99,7 @@ func (w *Worker) Do() (err error) {
 	}
 
 	multithreadedThreshold := w.multithreadedThreshold
-	if multithreadedThreshold < 0 {
+	if multithreadedThreshold < 0 { // < 0
 		multithreadedThreshold = workersCount * 50
 	}
 
