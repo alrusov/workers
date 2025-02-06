@@ -1,4 +1,4 @@
-github.com/alrusov/misc v1.1.8 h1:ZZ9i2lExQPTiROPSOrKsq47V7KswlIcXATijEO2ZIeo=
-github.com/alrusov/misc v1.1.8/go.mod h1:9gOEe1QZuhN0rbSC1I/VKMdyEU9DxDJ70NobFJnX3dU=
+github.com/alrusov/misc v1.1.20 h1:vrDFR3LaOvaQQ8fKaXBIpR4UE87akIOXZLyc+l44q3g=
+github.com/alrusov/misc v1.1.20/go.mod h1:fGbi2F6gX28+V+qDZJrzoiwH6sY5sB7zDl7eXulZa00=
 github.com/alrusov/panic v0.1.15 h1:b2IoZJySWdGUX+wXOXOF1dcxUXTYWeoRCt7x/ePZDwg=
 github.com/alrusov/panic v0.1.15/go.mod h1:YZ1wgCCIzqaPOnD5w2zJkpecV0DEfsClSgOVOEABKhY=

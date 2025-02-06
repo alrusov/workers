@@ -177,16 +177,18 @@ func (w *Worker) Do() (err error) {
 		}
 	}()
 
+	elements := make([]element, elementsCount)
+
 	for i := 0; i < elementsCount; i++ {
 		var data any
 		if w.flags&FlagDontUseGetElement == 0 {
 			data = p.GetElement(i)
 		}
 
-		queue <- &element{
-			idx:  i,
-			data: data,
-		}
+		e := &elements[i]
+		e.idx = i
+		e.data = data
+		queue <- e
 	}
 
 	close(queue)
