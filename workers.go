@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	"sync/atomic"
 
 	"github.com/alrusov/misc"
 	"github.com/alrusov/panic"
@@ -37,18 +38,11 @@ type (
 
 	// MultithreadedThreshold --
 	MultithreadedThreshold int
-
-	element struct {
-		idx  int
-		data any
-	}
 )
 
 const (
-	// FlagDontUseGetElement --
-	FlagDontUseGetElement = 0x0000001
-	// FlagFailOnError --
-	FlagFailOnError = 0x0000002
+	FlagDontUseGetElement = 0x0000001 // Dont use GetElement function
+	FlagFailOnError       = 0x0000002 // Fail on error
 )
 
 //----------------------------------------------------------------------------------------------------------------------------//
@@ -90,7 +84,7 @@ func (w *Worker) Do() (err error) {
 	}
 
 	workersCount := w.maxWorker
-	if workersCount <= 0 { // <= 0
+	if workersCount <= 0 {
 		workersCount = runtime.GOMAXPROCS(-1)
 	}
 
@@ -99,18 +93,19 @@ func (w *Worker) Do() (err error) {
 	}
 
 	multithreadedThreshold := w.multithreadedThreshold
-	if multithreadedThreshold < 0 { // < 0
+	if multithreadedThreshold < 0 {
 		multithreadedThreshold = workersCount * 50
 	}
 
 	msgs := misc.NewMessages()
 
 	if workersCount == 1 || multithreadedThreshold > elementsCount {
-		// Singlethread
+		// Single thread
 		p.ProcInitFunc(-1)
 
+		var data any
+
 		for i := 0; i < elementsCount; i++ {
-			var data any
 			if w.flags&FlagDontUseGetElement == 0 {
 				data = p.GetElement(i)
 			}
@@ -135,65 +130,48 @@ func (w *Worker) Do() (err error) {
 	var wg sync.WaitGroup
 	wg.Add(int(workersCount))
 
-	queue := make(chan *element, elementsCount)
+	currIdx := int32(-1)
+	active := true
 
-	go func() {
-		panicID := panic.ID()
-		defer panic.SaveStackToLogEx(panicID)
+	for wi := 0; wi < workersCount; wi++ {
+		wi := wi
+		go func() {
+			panicID := panic.ID()
+			defer panic.SaveStackToLogEx(panicID)
 
-		active := true
+			p.ProcInitFunc(wi)
 
-		for wi := 0; wi < workersCount; wi++ {
-			wi := wi
-			go func() {
-				panicID := panic.ID()
-				defer panic.SaveStackToLogEx(panicID)
+			defer func() {
+				p.ProcFinishFunc(wi)
+				wg.Done()
+			}()
 
-				defer func() {
-					p.ProcFinishFunc(wi)
-					wg.Done()
-				}()
+			var data any
 
-				p.ProcInitFunc(wi)
-
-				for active {
-					data, more := <-queue
-
+			for active {
+				idx := int(atomic.AddInt32(&currIdx, 1))
+				if idx >= elementsCount {
 					// No more data
-					if !more {
-						return
-					}
+					break
+				}
 
-					err := p.ProcFunc(data.idx, data.data)
-					if err != nil {
-						msgs.Add("[%d] %s", data.idx, err)
-						if w.flags&FlagFailOnError != 0 {
-							active = false
-							return
-						}
+				if w.flags&FlagDontUseGetElement == 0 {
+					data = p.GetElement(idx)
+				}
+
+				err := p.ProcFunc(idx, data)
+				if err != nil {
+					msgs.Add("[%d] %s", idx, err)
+					if w.flags&FlagFailOnError != 0 {
+						active = false
+						break
 					}
 				}
-			}()
-		}
-	}()
-
-	elements := make([]element, elementsCount)
-
-	for i := 0; i < elementsCount; i++ {
-		var data any
-		if w.flags&FlagDontUseGetElement == 0 {
-			data = p.GetElement(i)
-		}
-
-		e := &elements[i]
-		e.idx = i
-		e.data = data
-		queue <- e
+			}
+		}()
 	}
 
-	close(queue)
 	wg.Wait()
-
 	err = msgs.Error()
 	return
 }
