@@ -98,6 +98,7 @@ func (w *Worker) Do() (err error) {
 	}
 
 	msgs := misc.NewMessages()
+	defer msgs.Free()
 
 	if workersCount == 1 || multithreadedThreshold > elementsCount {
 		// Single thread
