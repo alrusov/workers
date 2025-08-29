@@ -54,9 +54,8 @@ func New(processor Processor, options ...any) (w *Worker, err error) {
 		return
 	}
 
-	w = &Worker{
-		processor: processor,
-	}
+	w = workersPool.Get().(*Worker)
+	w.processor = processor
 
 	for _, opt := range options {
 		switch opt := opt.(type) {
@@ -76,6 +75,8 @@ func New(processor Processor, options ...any) (w *Worker, err error) {
 
 // Do --
 func (w *Worker) Do() (err error) {
+	defer w.free()
+
 	p := w.processor
 
 	elementsCount := p.ElementsCount()
@@ -106,7 +107,7 @@ func (w *Worker) Do() (err error) {
 
 		var data any
 
-		for i := 0; i < elementsCount; i++ {
+		for i := range elementsCount {
 			if w.flags&FlagDontUseGetElement == 0 {
 				data = p.GetElement(i)
 			}
@@ -134,7 +135,7 @@ func (w *Worker) Do() (err error) {
 	currIdx := int32(-1)
 	active := true
 
-	for wi := 0; wi < workersCount; wi++ {
+	for wi := range workersCount {
 		wi := wi
 		go func() {
 			panicID := panic.ID()
@@ -175,6 +176,20 @@ func (w *Worker) Do() (err error) {
 	wg.Wait()
 	err = msgs.Error()
 	return
+}
+
+//----------------------------------------------------------------------------------------------------------------------------//
+
+var (
+	workersPool = sync.Pool{
+		New: func() any {
+			return &Worker{}
+		},
+	}
+)
+
+func (w *Worker) free() {
+	workersPool.Put(w)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------//
