@@ -49,7 +49,7 @@ const (
 
 // New --
 func New(processor Processor, options ...any) (w *Worker, err error) {
-	if processor == nil {
+	if misc.IsNil(processor) {
 		err = fmt.Errorf("processor is nil")
 		return
 	}
@@ -186,9 +186,12 @@ var (
 			return &Worker{}
 		},
 	}
+
+	emptyWorker = Worker{}
 )
 
 func (w *Worker) free() {
+	*w = emptyWorker
 	workersPool.Put(w)
 }
 
