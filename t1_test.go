@@ -44,7 +44,7 @@ func testComplex(t *testing.T, n int) {
 			clean:     false,
 			withDelay: false,
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			tw.data[i] = i
 		}
 
@@ -57,12 +57,14 @@ func testComplex(t *testing.T, n int) {
 			t.Fatalf("New(...): %s", err.Error())
 		}
 
+		defer w.Free()
+
 		err = w.Do()
 		if err != nil {
 			t.Fatalf("%s: %s", fn, err.Error())
 		}
 
-		for i := 0; i < n; i++ {
+		for i := range n {
 			if tw.data[i] != -i {
 				t.Fatalf("%s: found %d, expected %d", fn, tw.data[i], -i)
 			}
@@ -76,9 +78,10 @@ func testComplex(t *testing.T, n int) {
 			threads = 1
 		}
 
-		if n == 0 {
+		switch n {
+		case 0:
 			st = 0
-		} else if n == 1 {
+		case 1:
 			st = 1
 		}
 
@@ -161,6 +164,8 @@ func benchmarkComplex(b *testing.B, n int, clean bool, single bool) {
 	if err != nil {
 		b.Fatalf("New: %s", err.Error())
 	}
+
+	w.Free()
 
 	b.ResetTimer()
 	err = w.Do()
