@@ -75,8 +75,6 @@ func New(processor Processor, options ...any) (w *Worker, err error) {
 
 // Do --
 func (w *Worker) Do() (err error) {
-	defer w.free()
-
 	p := w.processor
 
 	elementsCount := p.ElementsCount()
@@ -190,7 +188,7 @@ var (
 	emptyWorker = Worker{}
 )
 
-func (w *Worker) free() {
+func (w *Worker) Free() {
 	*w = emptyWorker
 	workersPool.Put(w)
 }
