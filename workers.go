@@ -131,24 +131,24 @@ func (w *Worker) Do() (err error) {
 	wg.Add(int(workersCount))
 
 	currIdx := int32(-1)
-	active := true
+	active := atomic.Bool{}
+	active.Store(true)
 
 	for wi := range workersCount {
 		wi := wi
 		go func() {
+			defer wg.Done()
+
 			panicID := panic.ID()
 			defer panic.SaveStackToLogEx(panicID)
 
-			p.ProcInitFunc(wi)
+			defer p.ProcFinishFunc(wi)
 
-			defer func() {
-				p.ProcFinishFunc(wi)
-				wg.Done()
-			}()
+			p.ProcInitFunc(wi)
 
 			var data any
 
-			for active {
+			for active.Load() {
 				idx := int(atomic.AddInt32(&currIdx, 1))
 				if idx >= elementsCount {
 					// No more data
@@ -163,7 +163,11 @@ func (w *Worker) Do() (err error) {
 				if err != nil {
 					msgs.Add("[%d] %s", idx, err)
 					if w.flags&FlagFailOnError != 0 {
-						active = false
+						// When FlagFailOnError is set and an error occurs:
+						// 1. No new tasks will be started
+						// 2. Already started tasks will complete
+						// 3. This provides graceful shutdown rather than immediate abort
+						active.Store(false)
 						break
 					}
 				}

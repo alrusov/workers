@@ -147,7 +147,7 @@ func benchmarkComplex(b *testing.B, n int, clean bool, single bool) {
 		clean:     clean,
 		withDelay: true,
 	}
-	for i := 0; i < n; i++ {
+	for i := range n {
 		tw.data[i] = i
 	}
 
