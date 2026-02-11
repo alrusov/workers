@@ -1,4 +1,15 @@
-github.com/alrusov/misc v1.1.28 h1:WOKI7kGUFXeD3NYiVUQefyeyy3rRXvJFWWwZg6oC5dY=
-github.com/alrusov/misc v1.1.28/go.mod h1:67mjE5belR2qSR4NyGBGk70oJQwkiRVnKbIrzXxpFRQ=
+github.com/alrusov/misc v1.1.30 h1:jOv4+7C8QK98YTzWz0N9Q3carr4SX8uND+AIV5S20vU=
+github.com/alrusov/misc v1.1.30/go.mod h1:/Lh7mL84scQKYYbQtNE5HPKyHAUfsNwE6ApInZcSydg=
 github.com/alrusov/panic v0.1.16 h1:zRwyDxavX3w/cnlX1aW3remDMAEEwMjs+BtjgxZND5A=
 github.com/alrusov/panic v0.1.16/go.mod h1:Un623hbV6QjGY3GNBoquVzP6lo3nEDJdDb3aanu44Ro=
+github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
+github.com/essentialkaos/translit v2.0.3+incompatible h1:ve7G/7KlwCo4XjWoAgcQC7neTtYcKOVrToYZSffkCAc=
+github.com/essentialkaos/translit v2.0.3+incompatible/go.mod h1:ylbWodNFD51eQ8HNXrNwm+e5DD+rmHwQ5cC5QyPl1lA=
+github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
+github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
+github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
+github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
+github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
+github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
+pkg.re/essentialkaos/check.v1 v1.2.0 h1:FN1UEUTQL7nyUng3i7sPY3+73XZPKUgOj2ZoLyhF0/M=
+pkg.re/essentialkaos/check.v1 v1.2.0/go.mod h1:B7CoMnGFRnruw7X2Z45kWNvoCW+5OhUsLUm1EBM1aJs=
